@@ -1,5 +1,5 @@
 {
-    "name": "Origin_sr3",
+    "name": "Mul_DBPN",
     "phase": "train", // train or val
     "gpu_ids": [
         1

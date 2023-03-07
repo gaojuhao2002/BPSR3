@@ -21,7 +21,7 @@
             "l_resolution": 64, // low resolution need to super_resolution
             "r_resolution": 512, // high resolution
             "batch_size": 2,
-            "num_workers": 8,
+            "num_workers": 4,
             "use_shuffle": true,
             "data_len": -1 // -1 represents all data used in train
         },

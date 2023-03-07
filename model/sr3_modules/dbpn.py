@@ -234,7 +234,7 @@ class Single_DBPN(nn.Module):
         self.up2 = D_UpBlock(base_filter, kernel, stride, padding, 2, noise_level_emb_dim=noise_level_channel)
         self.down3 = D_DownBlock(base_filter, kernel, stride, padding, 2, noise_level_emb_dim=noise_level_channel)
         self.up3 = D_UpBlock(base_filter, kernel, stride, padding, 3, noise_level_emb_dim=noise_level_channel)
-        self.down4 = D_UpBlock(base_filter, kernel, stride, padding, 3, noise_level_emb_dim=noise_level_channel)
+        self.down4 = D_DownBlock(base_filter, kernel, stride, padding, 3, noise_level_emb_dim=noise_level_channel)
         self.up4 = D_UpBlock(base_filter, kernel, stride, padding, 4, noise_level_emb_dim=noise_level_channel)
 
         # 缓冲Change Scale Conv
@@ -248,7 +248,7 @@ class Single_DBPN(nn.Module):
 
         l1 = self.down1(x, t)
         h1 = self.up1(l1, t)
-        l2 = self.down2(l1, t)
+        l2 = self.down2(h1, t)
 
         concat_l = torch.cat((l2, l1), 1)
         h = self.up2(concat_l, t)
@@ -266,8 +266,8 @@ class Single_DBPN(nn.Module):
         h = self.up4(concat_l, t)
         # =-----------------------------------------------------------这个模块可以拓展为stage的函数
         concat_h = torch.cat((h, concat_h), 1)
-        x = self.output_conv(concat_h, t)
-        return x
+        out = self.CS_conv(concat_h, t)
+        return out
 
 class Mul_Scale_DBPN(nn.Module):
     def __init__(self,num_channels, base_filter,feat=256,with_noise_level_emb = True, inner_channel=64):
@@ -332,4 +332,4 @@ class Mul_Scale_DBPN(nn.Module):
         # 空间换时间，，，，，时间换空间，，，，串联并联，先进先出，算完删除图片，只保存结果的特征，释放空间
         x=torch.cat([sc2,sc4,sc8],1)
 
-        return self.output_conv(x)
+        return self.output_conv(x,t)

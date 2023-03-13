@@ -2,7 +2,7 @@
     "name": "Mul_DBPN",
     "phase": "train", // train or val
     "gpu_ids": [
-        -1
+        0,1
     ],
     "path": { //set the path
         "log": "logs",

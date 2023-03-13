@@ -300,7 +300,7 @@ class Mul_Scale_DBPN(nn.Module):
         self.Scale8d = Single_DBPN(base_filter, noise_level_channel, 8)
         # 结束的缓冲
         num_stages_list=[4,4,4]#可以为了空间，调节numstages
-        self.output_conv= ConvBlock(sum(num_stages_list) * base_filter, 3,3, 1, 1, activation=None, norm=None,
+        self.output_conv= ConvBlock(len(num_stages_list) * base_filter, 3,3, 1, 1, activation=None, norm=None,
                                      noise_level_emb_dim=noise_level_channel)
         # 参数初始化==================================================================================================================!!!!!!!2023.1.1修改
         for m in self.modules():

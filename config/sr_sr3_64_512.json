@@ -2,7 +2,7 @@
     "name": "Mul_DBPN",
     "phase": "train", // train or val
     "gpu_ids": [
-        1
+        -1
     ],
     "path": { //set the path
         "log": "logs",
@@ -16,7 +16,7 @@
         "train": {
             "name": "FFHQ",
             "mode": "HR", // whether need LR img
-            "dataroot": "/gjh/SR3/data/dataset/ffhq_64_512",
+            "dataroot": "/kaggle/working/Image-Super-Resolution-via-Iterative-Refinement-master/dataset_64_512",
             "datatype": "img", //lmdb or img, path of img files
             "l_resolution": 64, // low resolution need to super_resolution
             "r_resolution": 512, // high resolution
@@ -80,8 +80,8 @@
     },
     "train": {
         "n_iter": 900000,
-        "val_freq": 1e4,
-        "save_checkpoint_freq": 1e4,
+        "val_freq": 900000,
+        "save_checkpoint_freq": 2e4,
         "print_freq": 50,
         "optimizer": {
             "type": "adam",

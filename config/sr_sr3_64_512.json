@@ -1,14 +1,14 @@
 {
-    "name": "Mul_DBPN",
+    "name": "Infer_Mul_DBPN",
     "phase": "train", // train or val
     "gpu_ids": [
-        1
+        0
     ],
     "path": { //set the path
         "log": "logs",
         "tb_logger": "tb_logger",
         "results": "results",
-        "checkpoint": "checkpoint",
+        "checkpoint": "/content/drive/MyDrive/Mul_DBPN/ckpt/I10000_E1",
         "resume_state": null
         // "resume_state": "experiments/distributed_high_sr_ffhq_210901_121212/checkpoint/I830000_E32" //pretrain model or training state
     },
@@ -16,7 +16,7 @@
         "train": {
             "name": "FFHQ",
             "mode": "HR", // whether need LR img
-            "dataroot": "/gjh/SR3/data/dataset/ffhq_64_512",
+            "dataroot": "dataset/ffhq_64_512",
             "datatype": "img", //lmdb or img, path of img files
             "l_resolution": 64, // low resolution need to super_resolution
             "r_resolution": 512, // high resolution
@@ -28,7 +28,7 @@
         "val": {
             "name": "CelebaHQ",
             "mode": "LRHR",
-            "dataroot": "/gjh/SR3/data/dataset/ffhq_64_512",
+            "dataroot": "dataset/celebahq_64_512",
             "datatype": "img", //lmdb or img, path of img files
             "l_resolution": 64,
             "r_resolution": 512,
@@ -80,7 +80,7 @@
     },
     "train": {
         "n_iter": 900000,
-        "val_freq": 1e4,
+        "val_freq": 1,
         "save_checkpoint_freq": 1e4,
         "print_freq": 50,
         "optimizer": {

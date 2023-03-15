@@ -230,51 +230,6 @@ class UNet(nn.Module):
 
         self.ups = nn.ModuleList(ups)
 
-
-        num_mults = len(channel_mults)
-        pre_channel = inner_channel
-        feat_channels = [pre_channel]
-        now_res = image_size
-        second_downs = []
-        for ind in range(num_mults):
-            is_last = (ind == num_mults - 1)
-            use_attn = (now_res in attn_res)
-            channel_mult = inner_channel * channel_mults[ind]
-            for _ in range(0, res_blocks):
-                second_downs.append(ResnetBlocWithAttn(
-                    pre_channel, channel_mult, noise_level_emb_dim=noise_level_channel, norm_groups=norm_groups, dropout=dropout, with_attn=use_attn))
-                feat_channels.append(channel_mult)
-                pre_channel = channel_mult
-            if not is_last:
-                second_downs.append(Downsample(pre_channel))
-                feat_channels.append(pre_channel)
-                now_res = now_res//2
-        self.second_downs = nn.ModuleList(second_downs)
-
-        self.second_mid = nn.ModuleList([
-            ResnetBlocWithAttn(pre_channel, pre_channel, noise_level_emb_dim=noise_level_channel, norm_groups=norm_groups,
-                               dropout=dropout, with_attn=True),
-            ResnetBlocWithAttn(pre_channel, pre_channel, noise_level_emb_dim=noise_level_channel, norm_groups=norm_groups,
-                               dropout=dropout, with_attn=False)
-        ])
-
-        second_ups = []
-        for ind in reversed(range(num_mults)):
-            is_last = (ind < 1)
-            use_attn = (now_res in attn_res)
-            channel_mult = inner_channel * channel_mults[ind]
-            for _ in range(0, res_blocks+1):
-                second_ups.append(ResnetBlocWithAttn(
-                    pre_channel+feat_channels.pop(), channel_mult, noise_level_emb_dim=noise_level_channel, norm_groups=norm_groups,
-                        dropout=dropout, with_attn=use_attn))
-                pre_channel = channel_mult
-            if not is_last:
-                second_ups.append(Upsample(pre_channel))
-                now_res = now_res*2
-
-        self.second_ups = nn.ModuleList(second_ups)
-
-
         self.final_conv = Block(pre_channel, default(out_channel, in_channel), groups=norm_groups)
 
     def forward(self, x, time):
@@ -296,25 +251,6 @@ class UNet(nn.Module):
                 x = layer(x)
 
         for layer in self.ups:
-            if isinstance(layer, ResnetBlocWithAttn):
-                x = layer(torch.cat((x, feats.pop()), dim=1), t)
-            else:
-                x = layer(x)
-        feats = []
-        for layer in self.second_downs:
-            if isinstance(layer, ResnetBlocWithAttn):
-                x = layer(x, t)
-            else:
-                x = layer(x)
-            feats.append(x)
-
-        for layer in self.second_mid:
-            if isinstance(layer, ResnetBlocWithAttn):
-                x = layer(x, t)
-            else:
-                x = layer(x)
-
-        for layer in self.second_ups:
             if isinstance(layer, ResnetBlocWithAttn):
                 x = layer(torch.cat((x, feats.pop()), dim=1), t)
             else:

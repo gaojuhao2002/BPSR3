@@ -163,7 +163,7 @@ if __name__ == '__main__':
     parser.add_argument('--path', '-p', type=str,
                         default='/kaggle/input/celebamaskhq/CelebAMask-HQ/CelebA-HQ-img'.format(Path.home()))
     parser.add_argument('--out', '-o', type=str,
-                        default='/kaggle/output/Datas/celeba')
+                        default='/kaggle/working/Datas/celeba')
 
     parser.add_argument('--size', type=str, default='64,256')
     parser.add_argument('--n_worker', type=int, default=3)

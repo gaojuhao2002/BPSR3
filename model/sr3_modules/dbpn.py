@@ -295,12 +295,15 @@ class Mul_Scale_DBPN(nn.Module):
                                noise_level_emb_dim=noise_level_channel)
         self.feat1 = ConvBlock(feat, base_filter, 1, 1, 0, activation='prelu', norm=None,
                                noise_level_emb_dim=noise_level_channel)
+        self.Scale0d = ConvBlock(base_filter, base_filter//2, 1, 1, 0, activation='prelu', norm=None,
+                               noise_level_emb_dim=noise_level_channel)
+
         self.Scale2d = Single_DBPN(base_filter,noise_level_channel,2)
         self.Scale4d = Single_DBPN(base_filter, noise_level_channel, 4)
         self.Scale8d = Single_DBPN(base_filter, noise_level_channel, 8)
         # 结束的缓冲
         num_stages_list=[4,4,4]#可以为了空间，调节numstages
-        self.output_conv= ConvBlock(len(num_stages_list) * base_filter, 3,3, 1, 1, activation=None, norm=None,
+        self.output_conv= ConvBlock(len(num_stages_list) * base_filter+base_filter//2, 3,3, 1, 1, activation=None, norm=None,
                                      noise_level_emb_dim=noise_level_channel)
         # 参数初始化==================================================================================================================!!!!!!!2023.1.1修改
         for m in self.modules():
@@ -326,10 +329,11 @@ class Mul_Scale_DBPN(nn.Module):
 
         x = self.feat0(x, t)
         x = self.feat1(x, t)
+        sc0=self.Scale0d(x,t)
         sc2=self.Scale2d(x, t)
         sc4 = self.Scale4d(x, t)
         sc8 = self.Scale8d(x, t)
         # 空间换时间，，，，，时间换空间，，，，串联并联，先进先出，算完删除图片，只保存结果的特征，释放空间
-        x=torch.cat([sc2,sc4,sc8],1)
+        x=torch.cat([sc2,sc4,sc8,sc0],1)
 
         return self.output_conv(x,t)

@@ -3,21 +3,7 @@
 # @author: GJH
 # @file: load_and_eval
 # @time: 2023/3/21,21:59
-import os
-res_path='C:/Users/Atlias/Desktop/结果测试对比/Test_Cal_Code/checkpoint'
-def get_file_names(path):
-    file_names = os.listdir(path)
-    processed_names = []
-    for name in file_names:
-        suffix = os.path.splitext(name)[1]
-        if suffix == '.pth':
-            index = name.find('_gen.pth')
-            if index == -1:
-                index = name.find('_opt.pth')
-            processed_name = name[:index]
-            if processed_name not in processed_names:
-                processed_names.append(processed_name)
-    return processed_names
+
 
 
 import torch
@@ -29,14 +15,13 @@ import core.logger as Logger
 import core.metrics as Metrics
 import os
 
-def load_and_infer(ckpt_path):
+def load_and_infer(ckpt_path,result_path,val_len):
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_256.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['val'], help='val(generation)', default='val')
     parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)
     parser.add_argument('-debug', '-d', action='store_true')
-    parser.add_argument('-enable_wandb', action='store_true')
     parser.add_argument('-log_infer', action='store_true')
 
     # parse configs
@@ -45,6 +30,7 @@ def load_and_infer(ckpt_path):
     # Convert to NoneDict, which return None for missing key.
     opt = Logger.dict_to_nonedict(opt)
     opt['path']['checkpoint']=ckpt_path#变成ckpt的路径
+    opt['datasets']['val']['data_len']=val_len
     # logging
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
@@ -72,10 +58,10 @@ def load_and_infer(ckpt_path):
 
     logger.info('Begin Model Inference.')
     current_step = 0
-    current_epoch = 0
+    current_epoch= 0
     idx = 0
-
-    result_path = '{}'.format(opt['path']['results'])
+    avg_psnr = 0.0
+    avg_ssim = 0.0
     os.makedirs(result_path, exist_ok=True)
     for _, val_data in enumerate(val_loader):
         idx += 1
@@ -86,7 +72,7 @@ def load_and_infer(ckpt_path):
         hr_img = Metrics.tensor2img(visuals['HR'])  # uint8
         fake_img = Metrics.tensor2img(visuals['INF'])  # uint8
 
-        sr_img_mode = 'grid'
+        sr_img_mode = 'single'
         if sr_img_mode == 'single':
             # single img series
             sr_img = visuals['SR']  # uint8
@@ -105,5 +91,42 @@ def load_and_infer(ckpt_path):
         Metrics.save_img(
             hr_img, '{}/{}_{}_hr.png'.format(result_path, current_step, idx))
         Metrics.save_img(
-            fake_img, '{}/{}_{}_inf.png'.format(result_path, current_step, idx))
+        fake_img, '{}/{}_{}_inf.png'.format(result_path, current_step, idx))
 
+        logger.info('Begin Model Evaluation.')
+        eval_psnr = Metrics.calculate_psnr(Metrics.tensor2img(visuals['SR'][-1]), hr_img)
+        eval_ssim = Metrics.calculate_ssim(Metrics.tensor2img(visuals['SR'][-1]), hr_img)
+
+        avg_psnr += eval_psnr
+        avg_ssim += eval_ssim
+
+    avg_psnr = avg_psnr / idx
+    avg_ssim = avg_ssim / idx
+    logger.info('# Validation # PSNR: {:.4e}'.format(avg_psnr))
+    logger.info('# Validation # SSIM: {:.4e}'.format(avg_ssim))
+    logger_val = logging.getLogger('val')  # validation logger
+    logger_val.info('<epoch:{:3d}, iter:{:8,d}> psnr: {:.4e}, ssim：{:.4e}'.format(
+        current_epoch, current_step, avg_psnr, avg_ssim))
+
+def get_file_names(path):
+    file_names = os.listdir(path)
+    processed_names = []
+    for name in file_names:
+        suffix = os.path.splitext(name)[1]
+        if suffix == '.pth':
+            index = name.find('_gen.pth')
+            if index == -1:
+                index = name.find('_opt.pth')
+            processed_name = name[:index]
+            if processed_name not in processed_names:
+                processed_names.append(processed_name)
+    return processed_names
+res_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
+ckpt_list=get_file_names(res_path)
+for epoch_name in ckpt_list:
+    index_of_e = epoch_name.index('E')
+    epoch = epoch_name[index_of_e + 1:]
+
+    print(epoch_name,epoch)
+    result_path='/gjh/4x_diff_multry/test_result/'+index_of_e
+    load_and_infer(epoch_name,result_path)

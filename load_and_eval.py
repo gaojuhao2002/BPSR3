@@ -1,3 +1,25 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# @author: GJH
+# @file: load_and_eval
+# @time: 2023/3/21,21:59
+import os
+res_path='C:/Users/Atlias/Desktop/结果测试对比/Test_Cal_Code/checkpoint'
+def get_file_names(path):
+    file_names = os.listdir(path)
+    processed_names = []
+    for name in file_names:
+        suffix = os.path.splitext(name)[1]
+        if suffix == '.pth':
+            index = name.find('_gen.pth')
+            if index == -1:
+                index = name.find('_opt.pth')
+            processed_name = name[:index]
+            if processed_name not in processed_names:
+                processed_names.append(processed_name)
+    return processed_names
+
+
 import torch
 import data as Data
 import model as Model
@@ -5,26 +27,24 @@ import argparse
 import logging
 import core.logger as Logger
 import core.metrics as Metrics
-from core.wandb_logger import WandbLogger
-from tensorboardX import SummaryWriter
 import os
 
-if __name__ == "__main__":
+def load_and_infer(ckpt_path):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_512.json',
+    parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_256.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['val'], help='val(generation)', default='val')
     parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)
     parser.add_argument('-debug', '-d', action='store_true')
     parser.add_argument('-enable_wandb', action='store_true')
     parser.add_argument('-log_infer', action='store_true')
-    
+
     # parse configs
     args = parser.parse_args()
     opt = Logger.parse(args)
     # Convert to NoneDict, which return None for missing key.
     opt = Logger.dict_to_nonedict(opt)
-
+    opt['path']['checkpoint']=ckpt_path#变成ckpt的路径
     # logging
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
@@ -34,12 +54,6 @@ if __name__ == "__main__":
     Logger.setup_logger('val', opt['path']['log'], 'val', level=logging.INFO)
     logger = logging.getLogger('base')
     logger.info(Logger.dict2str(opt))
-    tb_logger = SummaryWriter(log_dir=opt['path']['tb_logger'])
-    # Initialize WandbLogger
-    if opt['enable_wandb']:
-        wandb_logger = WandbLogger(opt)
-    else:
-        wandb_logger = None
 
     # dataset
     for phase, dataset_opt in opt['datasets'].items():
@@ -55,7 +69,7 @@ if __name__ == "__main__":
 
     diffusion.set_new_noise_schedule(
         opt['model']['beta_schedule']['val'], schedule_phase='val')
-    
+
     logger.info('Begin Model Inference.')
     current_step = 0
     current_epoch = 0
@@ -63,7 +77,7 @@ if __name__ == "__main__":
 
     result_path = '{}'.format(opt['path']['results'])
     os.makedirs(result_path, exist_ok=True)
-    for _,  val_data in enumerate(val_loader):
+    for _, val_data in enumerate(val_loader):
         idx += 1
         diffusion.feed_data(val_data)
         diffusion.test(continous=True)
@@ -93,8 +107,3 @@ if __name__ == "__main__":
         Metrics.save_img(
             fake_img, '{}/{}_{}_inf.png'.format(result_path, current_step, idx))
 
-        if wandb_logger and opt['log_infer']:
-            wandb_logger.log_eval_data(fake_img, Metrics.tensor2img(visuals['SR'][-1]), hr_img)
-
-    if wandb_logger and opt['log_infer']:
-        wandb_logger.log_eval_table(commit=True)

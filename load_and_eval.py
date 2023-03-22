@@ -13,7 +13,7 @@ import core.logger as Logger
 import core.metrics as Metrics
 import os
 
-def load_and_infer(ckpt_path,result_path,val_len):
+def load_and_infer(ckpt_path,result_path,val_len,infer_step):
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_256.json',
                         help='JSON file for configuration')
@@ -29,6 +29,7 @@ def load_and_infer(ckpt_path,result_path,val_len):
     opt = Logger.dict_to_nonedict(opt)
     opt['path']['checkpoint']=ckpt_path#变成ckpt的路径
     opt['datasets']['val']['data_len']=val_len
+    opt['model']['beta_schedule']['n_timestep']=infer_step
     # logging
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
@@ -121,6 +122,7 @@ def get_file_names(path):
     return processed_names
 res_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
 ckpt_list=get_file_names(res_path)
+print(len(ckpt_list))
 df=pd.DataFrame(columns=['PSNR','SSIM'])
 for epoch_name in ckpt_list:
     index_of_e = epoch_name.index('E')

@@ -3,9 +3,7 @@
 # @author: GJH
 # @file: load_and_eval
 # @time: 2023/3/21,21:59
-
-
-
+import pandas as pd
 import torch
 import data as Data
 import model as Model
@@ -107,7 +105,7 @@ def load_and_infer(ckpt_path,result_path,val_len):
     logger_val = logging.getLogger('val')  # validation logger
     logger_val.info('<epoch:{:3d}, iter:{:8,d}> psnr: {:.4e}, ssim：{:.4e}'.format(
         current_epoch, current_step, avg_psnr, avg_ssim))
-
+    return avg_psnr,avg_ssim
 def get_file_names(path):
     file_names = os.listdir(path)
     processed_names = []
@@ -123,10 +121,12 @@ def get_file_names(path):
     return processed_names
 res_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
 ckpt_list=get_file_names(res_path)
+df=pd.DataFrame(columns=['PSNR','SSIM'])
 for epoch_name in ckpt_list:
     index_of_e = epoch_name.index('E')
     epoch = epoch_name[index_of_e + 1:]
-
     print(epoch_name,epoch)
     result_path='/gjh/4x_diff_multry/test_result/'+index_of_e
-    load_and_infer(epoch_name,result_path)
+    avg_psnr,avg_ssim=load_and_infer(epoch_name,result_path,1)
+    df.loc[epoch]=[avg_psnr,avg_ssim]
+df.to_excel('/gjh/4x_diff_multry/test_result_excel/res.xlsx')

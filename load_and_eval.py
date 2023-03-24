@@ -31,13 +31,14 @@ def load_and_infer(ckpt_path,result_path,val_len,infer_step):
     opt['path']['checkpoint']=ckpt_path#变成ckpt的路径
     opt['datasets']['val']['data_len']=val_len
     opt['model']['beta_schedule']['n_timestep']=infer_step
+    print('-*'*20,'测试集数据长度：',opt['datasets']['val']['data_len'])
     # logging
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
 
     # Logger.setup_logger(None, opt['path']['log'],
     #                     'train', level=logging.INFO, screen=True)
-    Logger.setup_logger('val', opt['path']['log'], 'val', level=logging.INFO)
+    # Logger.setup_logger('val', opt['path']['log'], 'val', level=logging.INFO)
     logger = logging.getLogger('base')
     # logger.info(Logger.dict2str(opt))
 
@@ -62,7 +63,7 @@ def load_and_infer(ckpt_path,result_path,val_len,infer_step):
     idx = 0
     avg_psnr = 0.0
     avg_ssim = 0.0
-    os.makedirs(result_path, exist_ok=True)
+    # os.makedirs(result_path, exist_ok=True)
     for _, val_data in enumerate(val_loader):
         idx += 1
         diffusion.feed_data(val_data)
@@ -105,17 +106,18 @@ def get_file_names(path):
                 processed_names.append(processed_name)
     return processed_names
 if __name__=='__main__':
-    ckpt_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
+    ckpt_path='/SR3/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
     ckpt_list=get_file_names(ckpt_path)
     print(len(ckpt_list))
     df=pd.DataFrame(columns=['PSNR','SSIM'])
     for epoch_name in ckpt_list:
         index_of_e = epoch_name.index('E')
         epoch = epoch_name[index_of_e + 1:]
-        print(epoch_name,epoch)
-        result_path='/gjh/4x_diff_multry/test_result/'+str(index_of_e)
+        print(epoch_name)
+        result_path='/SR3/Only_Infer_result/RESULT/'+str(index_of_e)
+        os.makedirs(result_path, exist_ok=True)
         avg_psnr,avg_ssim=load_and_infer(epoch_name,result_path,1,10)
         df.loc[epoch]=[avg_psnr,avg_ssim]
-    df.to_excel('/gjh/4x_diff_multry/test_result_excel/res.xlsx')
+    df.to_excel('/SR3/Only_Infer_result/RESULT/res.xlsx')
 
     #记得把base_model gpu还回去

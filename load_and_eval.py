@@ -15,7 +15,7 @@ import os
 
 def load_and_infer(ckpt_path,result_path,val_len,infer_step):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_256.json',
+    parser.add_argument('-c', '--config', type=str, default='config/infer_test.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['val'], help='val(generation)', default='val')
     parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)

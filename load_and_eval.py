@@ -104,16 +104,18 @@ def get_file_names(path):
             if processed_name not in processed_names:
                 processed_names.append(processed_name)
     return processed_names
-res_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
-ckpt_list=get_file_names(res_path)
-print(len(ckpt_list))
-df=pd.DataFrame(columns=['PSNR','SSIM'])
-for epoch_name in ckpt_list:
-    index_of_e = epoch_name.index('E')
-    epoch = epoch_name[index_of_e + 1:]
-    print(epoch_name,epoch)
-    result_path='/gjh/4x_diff_multry/test_result/'+str(index_of_e)
-    avg_psnr,avg_ssim=load_and_infer(epoch_name,result_path,1,10)
-    df.loc[epoch]=[avg_psnr,avg_ssim]
-df.to_excel('/gjh/4x_diff_multry/test_result_excel/res.xlsx')
-#记得把base_model gpu还回去
+if __name__=='__main__':
+    ckpt_path='/gjh/4x_diff_multry/Image-Super-Resolution-via-Iterative-Refinement-master/experiments/64_256_Train_0iter_230318_031257/checkpoint/'
+    ckpt_list=get_file_names(ckpt_path)
+    print(len(ckpt_list))
+    df=pd.DataFrame(columns=['PSNR','SSIM'])
+    for epoch_name in ckpt_list:
+        index_of_e = epoch_name.index('E')
+        epoch = epoch_name[index_of_e + 1:]
+        print(epoch_name,epoch)
+        result_path='/gjh/4x_diff_multry/test_result/'+str(index_of_e)
+        avg_psnr,avg_ssim=load_and_infer(epoch_name,result_path,1,10)
+        df.loc[epoch]=[avg_psnr,avg_ssim]
+    df.to_excel('/gjh/4x_diff_multry/test_result_excel/res.xlsx')
+
+    #记得把base_model gpu还回去

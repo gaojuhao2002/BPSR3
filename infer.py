@@ -11,7 +11,7 @@ import os
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_512.json',
+    parser.add_argument('-c', '--config', type=str, default='config/temp.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['val'], help='val(generation)', default='val')
     parser.add_argument('-gpu', '--gpu_ids', type=str, default=None)
@@ -54,9 +54,11 @@ if __name__ == "__main__":
     diffusion = Model.create_model(opt)
     logger.info('Initial Model Finished')
 
+
     diffusion.set_new_noise_schedule(
         opt['model']['beta_schedule']['val'], schedule_phase='val')
-    
+
+
     logger.info('Begin Model Inference.')
     current_step = 0
     current_epoch = 0

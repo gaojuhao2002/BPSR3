@@ -12,7 +12,7 @@ import numpy as np
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='config/sr_sr3_64_512.json',
+    parser.add_argument('-c', '--config', type=str, default='config/temp.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['train', 'val'],
                         help='Run either train(training) or val(generation)', default='train')
@@ -82,6 +82,9 @@ if __name__ == "__main__":
             current_epoch += 1
             for _, train_data in enumerate(train_loader):
                 current_step += 1
+
+
+
                 if current_step > n_iter:
                     break
                 diffusion.feed_data(train_data)

@@ -3,14 +3,16 @@ import core.metrics as Metrics
 from PIL import Image
 import numpy as np
 import glob
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--path', type=str,
-                        default='experiments/basic_sr_ffhq_210809_142238/results')
+                        default=r'C:\Users\Atlias\Desktop\论文\Face_image_results')
     args = parser.parse_args()
     real_names = list(glob.glob('{}/*_hr.png'.format(args.path)))
-    fake_names = list(glob.glob('{}/*_sr.png'.format(args.path)))
-
+    fake_names = list(glob.glob('{}/*_sr_10.png'.format(args.path)))
+    print(real_names)
+    print(fake_names)
     real_names.sort()
     fake_names.sort()
 
@@ -20,7 +22,7 @@ if __name__ == "__main__":
     for rname, fname in zip(real_names, fake_names):
         idx += 1
         ridx = rname.rsplit("_hr")[0]
-        fidx = rname.rsplit("_sr")[0]
+        fidx = fname.rsplit("_sr")[0]
         assert ridx == fidx, 'Image ridx:{ridx}!=fidx:{fidx}'.format(
             ridx, fidx)
 
@@ -30,7 +32,7 @@ if __name__ == "__main__":
         ssim = Metrics.calculate_ssim(sr_img, hr_img)
         avg_psnr += psnr
         avg_ssim += ssim
-        if idx % 20 == 0:
+        if idx % 1 == 0:
             print('Image:{}, PSNR:{:.4f}, SSIM:{:.4f}'.format(idx, psnr, ssim))
 
     avg_psnr = avg_psnr / idx
